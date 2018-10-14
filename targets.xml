@@ -1,0 +1,198 @@
+<project name="Salesforce Ant tasks" default="default" basedir="." xmlns:sf="antlib:com.salesforce">
+    <property environment="env"/>
+    
+    <condition property="sf.username" value=""> <not> <isset property="sf.username"/> </not> </condition>
+    <condition property="sf.password" value=""> <not> <isset property="sf.password"/> </not> </condition>
+    <condition property="sf.sessionId" value=""> <not> <isset property="sf.sessionId"/> </not> </condition>
+    <condition property="sf.pkgName" value=""> <not> <isset property="sf.pkgName"/> </not> </condition>
+    <condition property="sf.zipFile" value=""> <not> <isset property="sf.zipFile"/> </not> </condition>
+    <condition property="sf.metadataType" value=""> <not> <isset property="sf.metadataType"/> </not> </condition>
+    <condition property="sf.serverurl" value=""> <not> <isset property="sf.serverurl"/> </not> </condition>
+    <condition property="sf.maxPoll" value=""> <not> <isset property="sf.maxPoll"/> </not> </condition>
+    
+    <taskdef resource="com/salesforce/antlib.xml" uri="antlib:com.salesforce">
+        <classpath>
+            <pathelement location="../ant-salesforce.jar" />        	
+        </classpath>
+    </taskdef>
+	
+    <target name="default" depends="require">
+        <echo message="List properties:"/>
+        <echo message="    Username: ${sf.username}"/>
+        <echo message="    Password: ${sf.password}"/>
+        <echo message="    Session Id: ${sf.sessionId}"/>
+        <echo message="    Pkg Name: ${sf.pkgName}"/>
+        <echo message="    Zip File: ${sf.zipFile}"/>
+        <echo message="    Metadata Type: ${sf.metadataType}"/>
+        <echo message="    Server URL: ${sf.serverurl}"/>
+        <echo message="    Max Poll: ${sf.maxPoll}"/>
+    </target>
+    
+    <target name="copystaticstosrc">
+        <copy todir="./resource/${folder}/src/styles" failonerror="false">
+            <fileset dir="./resource/${folder}/staticresources" includes="**/style*.resource"/>
+        </copy>
+        <copy todir="./resource/${folder}/src/scripts" failonerror="false">
+            <fileset dir="./resource/${folder}/staticresources" includes="**/script*.resource"/>
+        </copy>		  
+        <move todir="./resource/${folder}/src/styles" includeemptydirs="false" failonerror="false">
+            <fileset dir="./${folder}/src/styles"/>
+            <mapper type="glob" from="*.resource" to="*.css"/>
+        </move>	
+        <move todir="./resource/${folder}/src/scripts" includeemptydirs="false" failonerror="false">
+            <fileset dir="./resource/${folder}/src/scripts"/>
+            <mapper type="glob" from="*.resource" to="*.js"/>
+        </move>
+    </target>
+    
+    <target name="copystaticsfromsrc">
+        <copy todir="./resource/${folder}/staticresources" failonerror="false">
+            <fileset dir="./resource/${folder}/src/styles" includes="**/style*.css"/>
+        </copy>
+        <copy todir="./resource/${folder}/staticresources" failonerror="false">
+            <fileset dir="./resource/${folder}/src/scripts" includes="**/script*.js"/>
+        </copy>		  
+        <move todir="./resource/${folder}/staticresources" includeemptydirs="false" failonerror="false">
+            <fileset dir="./resource/${folder}/staticresources"/>
+            <mapper type="glob" from="*.css" to="*.resource"/>
+        </move>	
+        <move todir="./resource/${folder}/staticresources" includeemptydirs="false" failonerror="false">
+            <fileset dir="./resource/${folder}/staticresources"/>
+            <mapper type="glob" from="*.js" to="*.resource"/>
+        </move>			  
+    </target>
+
+    <target name="retrive" depends="require">
+        <input message="Enter file:" addproperty="file"/>
+        <delete dir="./resource/${file}"/>
+        <mkdir dir="./resource/${file}"/>
+		<sf:retrieve username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="./resource/${file}" unpackaged="./resource/${file}.xml"/>
+    </target>
+
+    <target name="retrive-f" depends="require">
+        <input message="Enter file:" addproperty="file"/>
+        <input message="Enter folder:" addproperty="folder"/>
+        <delete dir="./resource/${folder}"/>
+        <mkdir dir="./resource/${folder}"/>
+		<sf:retrieve username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="./resource/${folder}" unpackaged="./resource/${file}.xml"/>
+    </target>
+	
+    <target name="deploy" depends="require">
+        <input message="Enter folder:" addproperty="folder"/>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true"/>
+    </target>
+    
+    <target name="deploy-z">
+        <input message="Enter file:" addproperty="file"/>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" zipFile="./resource/_zip/${file}" rollbackOnError="true"/>
+    </target>
+    
+    <target name="deploy-t">
+        <input message="Enter folder:" addproperty="folder"/>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true" testlevel="RunLocalTests"/>
+    </target>
+    
+    <target name="deploy-o">
+        <input message="Enter folder:" addproperty="folder"/>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true" testlevel="RunAllTestsInOrg"/>
+    </target>
+
+    <target name="retrive-r" depends="require">
+        <input message="Enter file:" addproperty="file"/>
+        <delete dir="./resource/${file}"/>
+        <mkdir dir="./resource/${file}"/>
+		<sf:retrieve username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="./resource/${file}" unpackaged="./resource/${file}.xml"/>
+        <antcall target="copystaticstosrc">
+            <param name="folder" value="${file}"/>
+        </antcall>
+    </target>
+
+    <target name="retrive-fr" depends="require">
+        <input message="Enter file:" addproperty="file"/>
+        <input message="Enter folder:" addproperty="folder"/>
+        <delete dir="./resource/${folder}"/>
+        <mkdir dir="./resource/${folder}"/>
+		<sf:retrieve username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="./resource/${folder}" unpackaged="./resource/${file}.xml"/>
+        <antcall target="copystaticstosrc">
+            <param name="folder" value="${folder}"/>
+        </antcall>
+    </target>
+	
+    <target name="deploy-r" depends="require">
+        <input message="Enter folder:" addproperty="folder"/>
+        <antcall target="copystaticsfromsrc">
+            <param name="folder" value="${folder}"/>
+        </antcall>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true"/>
+    </target>
+	
+    <target name="deploy-rt" depends="require">
+        <input message="Enter folder:" addproperty="folder"/>
+        <antcall target="copystaticsfromsrc">
+            <param name="folder" value="${folder}"/>
+        </antcall>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true" testlevel="RunLocalTests"/>
+    </target>
+	
+    <target name="deploy-ro" depends="require">
+        <input message="Enter folder:" addproperty="folder"/>
+        <antcall target="copystaticsfromsrc">
+            <param name="folder" value="${folder}"/>
+        </antcall>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true" testlevel="RunAllTestsInOrg"/>
+    </target>
+    
+    <target name="quick" depends="require">
+        <sf:deployRecentValidation username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" recentValidationId="${sf.recentValidationId}"/>
+	</target>
+    
+    <target name="cancel" depends="require">
+        <sf:cancelDeploy username="${sf.username}" password="${sf.password}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" requestId="${sf.requestId}"/>
+	</target>
+    
+    <target name="list" depends="require">
+        <sf:listMetadata username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" metadataType="${sf.metadataType}"/>
+    </target>
+    
+    <target name="describe" depends="require">
+        <sf:describeMetadata username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}"/>
+    </target>
+
+    <target name="r-package" depends="require">
+        <property name="file" value="package"/>
+        <delete dir="./resource/${file}"/>
+        <mkdir dir="./resource/${file}"/>
+		<sf:retrieve username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="./resource/${file}" unpackaged="./resource/${file}.xml"/>
+    </target>
+	
+    <target name="d-package" depends="require">
+        <property name="folder" value="package"/>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true"/>
+    </target>
+
+    <target name="r-temp" depends="require">
+        <property name="file" value="temp"/>
+        <delete dir="./resource/${file}"/>
+        <mkdir dir="./resource/${file}"/>
+		<sf:retrieve username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="./resource/${file}" unpackaged="./resource/${file}.xml"/>
+    </target>
+	
+    <target name="d-temp" depends="require">
+        <property name="folder" value="temp"/>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true"/>
+    </target>
+
+    <!--Customize targets-->
+    
+    <target name="r-mci" depends="require">
+        <property name="file" value="mci"/>
+        <delete dir="./resource/${file}"/>
+        <mkdir dir="./resource/${file}"/>
+		<sf:retrieve username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" retrieveTarget="./resource/${file}" unpackaged="./resource/${file}.xml"/>
+    </target>
+	
+    <target name="d-mci" depends="require">
+        <property name="folder" value="mci"/>
+        <sf:deploy username="${sf.username}" password="${sf.password}" sessionId="${sf.sessionId}" serverurl="${sf.serverurl}" maxPoll="${sf.maxPoll}" deployRoot="./resource/${folder}" rollbackOnError="true"/>
+    </target>
+</project>

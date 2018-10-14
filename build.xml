@@ -1,0 +1,10 @@
+<project name="Salesforce Ant" default="default">
+    <target name="require">
+        <input message="Enter sandbox:" addproperty="sandbox"/>
+        
+        <property file="./properties/build-${sandbox}.properties"/>
+    </target>
+    
+    <import file="./targets.xml"/>
+</project>
+

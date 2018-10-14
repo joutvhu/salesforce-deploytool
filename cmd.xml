@@ -1,0 +1,7 @@
+<project name="Salesforce Ant" default="default">
+    <target name="require">
+        <echo message="Loaded properties."/>
+    </target>
+    
+    <import file="./targets.xml"/>
+</project>
